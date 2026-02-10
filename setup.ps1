@@ -10,7 +10,7 @@ Write-Host "   Software Inventario - Auto Setup" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # Function to check command availability
-function Check-Command {
+function Test-CommandStatus {
     param($name, $cmd)
     Write-Host "Checking for $name..." -NoNewline
     if (Get-Command $cmd -ErrorAction SilentlyContinue) {
@@ -25,13 +25,13 @@ function Check-Command {
 
 # 1. Check Prerequisites
 Write-Host "`n[1/4] Checking Prerequisites..." -ForegroundColor Yellow
-if (-not (Check-Command "Node.js" "node")) {
+if (-not (Test-CommandStatus "Node.js" "node")) {
     Write-Host "Node.js is required. Opening download page..."
     Start-Process "https://nodejs.org/"
     Pause
     exit
 }
-if (-not (Check-Command "Git" "git")) {
+if (-not (Test-CommandStatus "Git" "git")) {
     Write-Host "Git is recommended but not strictly required for running." -ForegroundColor Gray
 }
 
@@ -55,7 +55,13 @@ JWT_SECRET=super_secret_key_99
     Write-Host "NOTE: Check backend/.env to match your DB credentials (default port 3306)." -ForegroundColor Magenta
 }
 else {
-    Write-Host "Backend .env already exists." -ForegroundColor Gray
+    Write-Host "Backend .env already exists. Checking for common issues..." -ForegroundColor Gray
+    $content = Get-Content $backendEnv
+    if ($content -match "DB_PORT=3333") {
+        Write-Host "Correcting DB_PORT from 3333 to 3306 in .env..." -ForegroundColor Yellow
+        $content = $content -replace "DB_PORT=3333", "DB_PORT=3306"
+        $content | Set-Content $backendEnv
+    }
 }
 
 # 2.5 Check Database Service (Automated)
@@ -88,19 +94,19 @@ else {
         $choice = Read-Host "Do you want to install MariaDB automatically? (Y/N)"
         if ($choice -eq 'Y' -or $choice -eq 'y') {
             Write-Host "Installing MariaDB via Winget..." -ForegroundColor Cyan
-            winget install -e --id MariaDB.MariaDB --silent --accept-package-agreements --accept-source-agreements
+            winget install -e --id MariaDB.Server --silent --accept-package-agreements --accept-source-agreements
 
             # Update path to include new installation
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 
             # Wait for service
-            Start-Sleep -s 10
+            Start-Sleep -s 15
             if (Get-Service "mysql" -ErrorAction SilentlyContinue) {
                 Write-Host "MariaDB Installed successfully." -ForegroundColor Green
                 $dbInstalled = $true
             }
             else {
-                Write-Host "MariaDB installed but service not detected yet. You may need to restart." -ForegroundColor Yellow
+                Write-Host "MariaDB installed but service not detected yet. You may need to restart the script or the machine." -ForegroundColor Yellow
             }
         }
     }
