@@ -11,3 +11,8 @@ playwright-report
 test-results
 pdf_processor/venv
 .gemini
+*.png
+*.pdf
+*.log
+*.txt
+testsprite_tests/
