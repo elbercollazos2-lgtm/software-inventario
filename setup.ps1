@@ -59,20 +59,83 @@ else {
     Write-Host "Backend .env already exists." -ForegroundColor Gray
 }
 
-# 2.5 Check Database Service (Basic check)
+# 2.5 Check Database Service (Automated)
 Write-Host "`n[2.5/4] Checking Database Service..." -ForegroundColor Yellow
-if (Get-Service "mysql" -ErrorAction SilentlyContinue) {
-    if ((Get-Service "mysql").Status -eq 'Running') {
+$dbService = Get-Service "mysql" -ErrorAction SilentlyContinue
+$dbInstalled = $false
+
+if ($dbService) {
+    if ($dbService.Status -eq 'Running') {
         Write-Host "MySQL Service is RUNNING." -ForegroundColor Green
+        $dbInstalled = $true
     }
     else {
-        Write-Host "MySQL Service is STOPPED. Please start it!" -ForegroundColor Red
+        Write-Host "MySQL Service is STOPPED. Attempting to start..." -ForegroundColor Yellow
+        Start-Service "mysql"
+        if ((Get-Service "mysql").Status -eq 'Running') {
+            Write-Host "MySQL Service started successfully." -ForegroundColor Green
+            $dbInstalled = $true
+        }
+        else {
+            Write-Host "Failed to start MySQL Service. Please start it manually." -ForegroundColor Red
+        }
     }
 }
 else {
-    Write-Host "MySQL service not found (typical for XAMPP or portable). Ensure it's running!" -ForegroundColor Yellow
+    Write-Host "MySQL/MariaDB service not found." -ForegroundColor Yellow
+
+    # Check if winget is available
+    if (Get-Command "winget" -ErrorAction SilentlyContinue) {
+        $choice = Read-Host "Do you want to install MariaDB automatically? (Y/N)"
+        if ($choice -eq 'Y' -or $choice -eq 'y') {
+            Write-Host "Installing MariaDB via Winget..." -ForegroundColor Cyan
+            winget install -e --id MariaDB.MariaDB --silent --accept-package-agreements --accept-source-agreements
+
+            # Update path to include new installation
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+            # Wait for service
+            Start-Sleep -s 10
+            if (Get-Service "mysql" -ErrorAction SilentlyContinue) {
+                Write-Host "MariaDB Installed successfully." -ForegroundColor Green
+                $dbInstalled = $true
+            }
+            else {
+                Write-Host "MariaDB installed but service not detected yet. You may need to restart." -ForegroundColor Yellow
+            }
+        }
+    }
+    else {
+        Write-Host "Winget not found. Cannot auto-install database." -ForegroundColor Red
+    }
 }
-Write-Host "REMINDER: You must manually create the database 'supermercado_db' in your SQL manager." -ForegroundColor Magenta
+
+if ($dbInstalled) {
+    # Attempt to create database if not exists
+    Write-Host "Ensuring database 'supermercado_db' exists..."
+    # Try using mysql command if available
+    if (Get-Command "mysql" -ErrorAction SilentlyContinue) {
+        mysql -u root -e "CREATE DATABASE IF NOT EXISTS supermercado_db;" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Database created/verified." -ForegroundColor Green
+
+            # Run Migrations
+            Write-Host "Running Database Migrations..."
+            Push-Location backend
+            node migrate.js
+            Pop-Location
+        }
+        else {
+            Write-Host "Could not connect to MySQL to create DB. Check credentials." -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "MySQL command not found in PATH. Skipping DB creation." -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host "Skipping Database Setup (DB Server not found)." -ForegroundColor Gray
+}
 
 # 3. Install Backend
 Write-Host "`n[3/4] Installing Backend Dependencies..." -ForegroundColor Yellow

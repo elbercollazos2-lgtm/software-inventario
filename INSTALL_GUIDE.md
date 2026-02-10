@@ -16,44 +16,30 @@ El instalador automático (`setup.ps1`) creará uno nuevo por ti.
 1.  **Abrir carpeta**: Navega a la carpeta del proyecto.
 2.  **Ejecutar Script**: Haz clic derecho en el archivo `setup.ps1` y selecciona **"Ejecutar con PowerShell"**.
     - Acepta los permisos de administrador.
-    - El script instalará Node.js y todas las dependencias necesarias.
+    - El script:
+        - Instalará Node.js si no lo tienes.
+        - **Instalará MariaDB** si no detecta una base de datos (te preguntará antes).
+        - Instalará todas las dependencias.
+        - Creará la base de datos y cargará las tablas automáticamente.
 
-## 🗄️ 3. Configuración de Base de Datos (CRÍTICO)
+## 🗄️ 3. Configuración de Base de Datos
 
-La mayoría de errores ("Error conectando a la Base de Datos") ocurren aquí.
+Si el script automático instaló MariaDB, **¡ya está todo listo!**
 
-1.  **Instalar MariaDB o MySQL**:
-    - Debes tener un servidor de base de datos instalado (ej: [XAMPP](https://www.apachefriends.org/), [MySQL Community](https://dev.mysql.com/downloads/installer/)).
-    - Asegúrate de que el servicio "MySQL" esté **INICIADO** (en verde en XAMPP).
-
-2.  **Crear la Base de Datos**:
-    - Abre tu gestor (phpMyAdmin, Workbench, HeidiSQL).
-    - Crea una nueva base de datos llamada: `supermercado_db`
-    - (Opcional) Importa el esquema si tienes un archivo `.sql` de respaldo. Si no, el sistema intentará crear las tablas.
-
-3.  **Verificar Credenciales**:
-    - Abre el archivo `backend/.env` con el Bloc de Notas.
-    - Verifica que `DB_USER` y `DB_PASSWORD` coincidan con tu instalación (por defecto XAMPP usa usuario 'root' y contraseña vacía).
-    - Verifica el `DB_PORT`. XAMPP usa **3306**. Si tu archivo dice 3333, cámbialo a 3306.
-
-    Ejemplo para XAMPP:
-    ```ini
-    DB_HOST=localhost
-    DB_USER=root
-    DB_PASSWORD=
-    DB_NAME=supermercado_db
-    DB_PORT=3306
-    ```
+Si prefieres hacerlo manual o usas XAMPP:
+1.  Asegúrate de que MySQL esté INICIADO.
+2.  El script intentará crear la base de datos `supermercado_db` por ti.
+3.  Si falla, abre tu gestor SQL y crea una base de datos llamada `supermercado_db`.
+4.  Verifica que `backend/.env` tenga el puerto correcto (3306).
 
 ## 🛠️ 4. Ejecución
 
 1.  Haz doble clic en `start.bat`.
 2.  Se abrirán dos ventanas negras y el navegador.
-3.  Si ves "✅ Conectado a la Base de Datos", ¡todo está listo!
+3.  Busca el mensaje "✅ Conectado a la Base de Datos" en la ventana del backend.
 
 ## 🐛 Solución de errores
 
 - **Error: "Error conectando a la Base de Datos"**:
-  - ¿Está prendido XAMPP/MySQL?
-  - ¿Creaste la base de datos `supermercado_db`?
-  - ¿La contraseña en `backend/.env` es correcta?
+  - Asegúrate de que el servicio MySQL esté corriendo.
+  - El script automático usa el usuario `root` sin contraseña. Si tu base de datos tiene contraseña, edita el archivo `backend/.env`.
