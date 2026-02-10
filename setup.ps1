@@ -16,7 +16,8 @@ function Check-Command {
     if (Get-Command $cmd -ErrorAction SilentlyContinue) {
         Write-Host " [OK]" -ForegroundColor Green
         return $true
-    } else {
+    }
+    else {
         Write-Host " [MISSING]" -ForegroundColor Red
         return $false
     }
@@ -52,10 +53,26 @@ JWT_SECRET=super_secret_key_99
 "@
     Set-Content -Path $backendEnv -Value $envContent
     Write-Host "Created backend/.env with default values." -ForegroundColor Green
-    Write-Host "NOTE: If your database password is not 'root', please edit backend/.env" -ForegroundColor Magenta
-} else {
+    Write-Host "NOTE: Check backend/.env to match your DB credentials (default port 3306)." -ForegroundColor Magenta
+}
+else {
     Write-Host "Backend .env already exists." -ForegroundColor Gray
 }
+
+# 2.5 Check Database Service (Basic check)
+Write-Host "`n[2.5/4] Checking Database Service..." -ForegroundColor Yellow
+if (Get-Service "mysql" -ErrorAction SilentlyContinue) {
+    if ((Get-Service "mysql").Status -eq 'Running') {
+        Write-Host "MySQL Service is RUNNING." -ForegroundColor Green
+    }
+    else {
+        Write-Host "MySQL Service is STOPPED. Please start it!" -ForegroundColor Red
+    }
+}
+else {
+    Write-Host "MySQL service not found (typical for XAMPP or portable). Ensure it's running!" -ForegroundColor Yellow
+}
+Write-Host "REMINDER: You must manually create the database 'supermercado_db' in your SQL manager." -ForegroundColor Magenta
 
 # 3. Install Backend
 Write-Host "`n[3/4] Installing Backend Dependencies..." -ForegroundColor Yellow

@@ -4,34 +4,56 @@ Esta guía explica cómo instalar y ejecutar el proyecto en un equipo nuevo desd
 
 ## 📦 1. Archivos Necesarios
 
-Para que el proyecto funcione en otro equipo, necesitas copiar **toda la carpeta del proyecto**, PERO hay un archivo crítico que **NO** se suele copiar automáticamente si se descarga desde GitHub: el archivo `.env`.
+Para que el proyecto funcione en otro equipo, descárgalo o cópialo.
 
-### 🚨 IMPORTANTE: El archivo `.env`
-El archivo `.env` contiene tus contraseñas y configuración secreta.
-- **Ubicación**: `backend/.env`
-- **Acción**: Si estás moviendo el proyecto manualmente (USB, red), asegúrate de copiar este archivo. Si usaste GitHub, este archivo NO se subió por seguridad.
-
-**Si descargaste el proyecto de GitHub:**
-El script de instalación automática (`setup.ps1`) creará uno nuevo por ti con valores por defecto. Si tu base de datos tiene contraseña, deberás editar el archivo `backend/.env` manualmente.
+**NOTA IMPORTANTE SOBRE SEGURIDAD (.env):**
+Si descargaste el proyecto de GitHub, el archivo de configuración `.env` no vendrá incluido.
+El instalador automático (`setup.ps1`) creará uno nuevo por ti.
+- Si copiaste el proyecto por USB, asegúrate de haber copiado también el archivo oculto `backend/.env`.
 
 ## 🚀 2. Instalación Automática (Recomendada)
 
-Hemos creado un script que hace todo el trabajo difícil.
-
 1.  **Abrir carpeta**: Navega a la carpeta del proyecto.
 2.  **Ejecutar Script**: Haz clic derecho en el archivo `setup.ps1` y selecciona **"Ejecutar con PowerShell"**.
-    - Si te pide permisos de administrador, acéptalos.
-    - El script verificará Node.js, instalará todas las librerías y configurará el entorno.
+    - Acepta los permisos de administrador.
+    - El script instalará Node.js y todas las dependencias necesarias.
 
-## 🛠️ 3. Ejecución
+## 🗄️ 3. Configuración de Base de Datos (CRÍTICO)
 
-Una vez instalado (ya sea manualmente o con el script):
+La mayoría de errores ("Error conectando a la Base de Datos") ocurren aquí.
 
-1.  Busca el archivo `start.bat` en la carpeta principal.
-2.  Haz doble clic en él.
-3.  Se abrirán dos ventanas negras (servidores) y tu navegador con la aplicación.
+1.  **Instalar MariaDB o MySQL**:
+    - Debes tener un servidor de base de datos instalado (ej: [XAMPP](https://www.apachefriends.org/), [MySQL Community](https://dev.mysql.com/downloads/installer/)).
+    - Asegúrate de que el servicio "MySQL" esté **INICIADO** (en verde en XAMPP).
 
-## 🐛 Solución de Problemas Comunes
+2.  **Crear la Base de Datos**:
+    - Abre tu gestor (phpMyAdmin, Workbench, HeidiSQL).
+    - Crea una nueva base de datos llamada: `supermercado_db`
+    - (Opcional) Importa el esquema si tienes un archivo `.sql` de respaldo. Si no, el sistema intentará crear las tablas.
 
-- **Error de Base de Datos**: Si ves errores de conexión ("Access denied", "ECONNREFUSED"), abre el archivo `backend/.env` con un bloc de notas y verifica que `DB_PASSWORD` sea la contraseña correcta de tu MySQL local.
-- **Node no reconocido**: Si `setup.ps1` dice que Node falta, descárgalo e instálalo desde [nodejs.org](https://nodejs.org/).
+3.  **Verificar Credenciales**:
+    - Abre el archivo `backend/.env` con el Bloc de Notas.
+    - Verifica que `DB_USER` y `DB_PASSWORD` coincidan con tu instalación (por defecto XAMPP usa usuario 'root' y contraseña vacía).
+    - Verifica el `DB_PORT`. XAMPP usa **3306**. Si tu archivo dice 3333, cámbialo a 3306.
+
+    Ejemplo para XAMPP:
+    ```ini
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASSWORD=
+    DB_NAME=supermercado_db
+    DB_PORT=3306
+    ```
+
+## 🛠️ 4. Ejecución
+
+1.  Haz doble clic en `start.bat`.
+2.  Se abrirán dos ventanas negras y el navegador.
+3.  Si ves "✅ Conectado a la Base de Datos", ¡todo está listo!
+
+## 🐛 Solución de errores
+
+- **Error: "Error conectando a la Base de Datos"**:
+  - ¿Está prendido XAMPP/MySQL?
+  - ¿Creaste la base de datos `supermercado_db`?
+  - ¿La contraseña en `backend/.env` es correcta?
