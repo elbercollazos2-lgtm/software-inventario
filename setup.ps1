@@ -38,7 +38,6 @@ if (-not (Check-Command "Git" "git")) {
 # 2. Setup Environment
 Write-Host "`n[2/4] Setting up Environment..." -ForegroundColor Yellow
 $backendEnv = "backend\.env"
-$backendExample = "backend\.env.example"
 
 if (-not (Test-Path $backendEnv)) {
     Write-Host "Creating backend .env file..."
@@ -46,7 +45,7 @@ if (-not (Test-Path $backendEnv)) {
 PORT=4000
 DB_HOST=localhost
 DB_USER=root
-DB_PASSWORD=root
+DB_PASSWORD=
 DB_NAME=supermercado_db
 DB_PORT=3306
 JWT_SECRET=super_secret_key_99
