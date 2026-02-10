@@ -1,0 +1,22 @@
+{
+  "system_state": {
+    "current_phase": "INIT",
+    "active_agents": [],
+    "last_checkpoint": ""
+  },
+  "project_context": {
+    "intent": "",
+    "architecture_style": "Maestro Artesano",
+    "tech_stack": [],
+    "scope_locked": false
+  },
+  "agent_signals": {
+    "CLARITY": { "intent_validated": false, "socratic_notes": "" },
+    "FORGE": { "structure_integrity": 1.0, "violations": [] },
+    "GENOME": { "semantic_score": 1.0, "naming_conventions_met": true },
+    "SENTINEL": { "security_gate_passed": true, "vulnerabilities": [] },
+    "AEGIS": { "certification_level": "None", "test_coverage": 0 },
+    "COMPASS": { "user_level": "Padawan", "current_challenge": "" },
+    "VELOCITY": { "delivery_readiness": 0.0, "rollback_plan_active": false }
+  }
+}

@@ -1,0 +1,30 @@
+# CLARITY: Project Scaffolding Questionnaire
+# Fill this out to define the scope and intent of the new project.
+
+project_metadata:
+  name: "New Project"
+  description: "Briefly describe the project."
+  target_audience: "Who is this for?"
+
+core_intent:
+  primary_goal: "What is the ONE thing this project must achieve?"
+  magic_moment: "What is the specific moment of 'wao' for the user?"
+  success_metric: "How will we know it's successful?"
+
+scoping:
+  must_have_screens:
+    - "Screen 1 (Description)"
+    - "Screen 2 (Description)"
+  critical_data_points:
+    - "Data 1"
+    - "Data 2"
+
+visual_intent:
+  mood: "e.g. Minimalist, Vibrant, Professional, Dark"
+  primary_color_hint: "e.g. #3b82f6"
+
+socratic_session:
+  completed: false
+  notes: |
+    - Question 1 response...
+    - Question 2 response...

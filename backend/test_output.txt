@@ -1,0 +1,67 @@
+  console.log
+    [dotenv@17.2.3] injecting env (7) from .env -- tip: ÔÜÖ´©Å  specify custom .env file path with { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: ­ƒöÉ prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+FAIL tests/error_handling.test.js
+  ÔùÅ Test suite failed to run
+
+    TypeError: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+
+      47 |
+      48 | // Handle unhandled routes
+    > 49 | app.all('*', (req, res, next) => {
+         |     ^
+      50 |     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+      51 | });
+      52 |
+
+      at name (node_modules/path-to-regexp/src/index.ts:225:13)
+      at parse (node_modules/path-to-regexp/src/index.ts:242:62)
+      at pathToRegexp (node_modules/path-to-regexp/src/index.ts:480:54)
+      at Object.match (node_modules/path-to-regexp/src/index.ts:438:28)
+      at matcher (node_modules/router/lib/layer.js:86:23)
+      at new Layer (node_modules/router/lib/layer.js:93:62)
+      at Function.route (node_modules/router/index.js:428:17)
+      at Function.route (node_modules/express/lib/application.js:257:22)
+      at Function.all (node_modules/express/lib/application.js:495:20)
+      at Object.all (src/app.js:49:5)
+      at Object.require (tests/error_handling.test.js:2:13)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.914 s
+Ran all test suites matching tests/error_handling.test.js.
+
+ReferenceError: You are trying to `import` a file after the Jest environment has been torn down. From tests/error_handling.test.js.
+
+      at Object.getCodec (node_modules/iconv-lite/lib/index.js:65:15)
+      at Object.getDecoder (node_modules/iconv-lite/lib/index.js:128:30)
+      at Object.exports.decode (node_modules/mysql2/lib/parsers/string.js:20:23)
+      at Packet.readNullTerminatedString (node_modules/mysql2/lib/packets/packet.js:413:25)
+      at Function.fromPacket (node_modules/mysql2/lib/packets/handshake.js:62:33)
+      at ClientHandshake.handshakeInit (node_modules/mysql2/lib/commands/client_handshake.js:111:40)
+      at ClientHandshake.execute (node_modules/mysql2/lib/commands/command.js:45:22)
+      at PoolConnection.handlePacket (node_modules/mysql2/lib/base/connection.js:508:34)
+      at PacketParser.onPacket (node_modules/mysql2/lib/base/connection.js:93:12)
+      at PacketParser.executeStart (node_modules/mysql2/lib/packet_parser.js:75:16)
+      at Socket.<anonymous> (node_modules/mysql2/lib/base/connection.js:100:25)
+  console.error
+    ÔØî Error conectando a la Base de Datos: Encoding not recognized: 'cesu8' (searched as: 'cesu8')
+
+    [0m [90m 20 |[39m     })
+     [90m 21 |[39m     [33m.[39m[36mcatch[39m(error [33m=>[39m {
+    [31m[1m>[22m[39m[90m 22 |[39m         console[33m.[39merror([32m'ÔØî Error conectando a la Base de Datos:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 23 |[39m     })[33m;[39m
+     [90m 24 |[39m
+     [90m 25 |[39m module[33m.[39mexports [33m=[39m pool[33m;[39m[0m
+
+      at error (src/config/db.js:22:17)
+

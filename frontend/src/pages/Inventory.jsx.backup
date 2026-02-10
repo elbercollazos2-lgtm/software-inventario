@@ -1,0 +1,431 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Search, Filter, Package, AlertTriangle, Calendar, Info, Eye, EyeOff, Calculator, Weight, ArrowDownUp } from 'lucide-react';
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '../components/ui';
+import { productService } from '../services/api';
+import axios from 'axios';
+
+export function Inventory() {
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentProduct, setCurrentProduct] = useState(null);
+    const [isPerecedero, setIsPerecedero] = useState(false);
+    const [isActive, setIsActive] = useState(true);
+
+    // Estados para el autocalculo y unidades
+    const [selectedCategoryId, setSelectedCategoryId] = useState('');
+    const [costo, setCosto] = useState(0);
+    const [precioVenta, setPrecioVenta] = useState(0);
+    const [unit, setUnit] = useState('Unidad');
+    const [allowFraction, setAllowFraction] = useState(false);
+
+    useEffect(() => {
+        fetchProducts();
+        fetchCategories();
+    }, []);
+
+    const fetchProducts = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await productService.getAll();
+            setProducts(response.data || []);
+        } catch (err) {
+            console.error('Error fetching products:', err);
+            setError('Error al cargar productos. Verifica la conexión.');
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:4000/api/categorias');
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const handleOpenModal = (product = null) => {
+        setCurrentProduct(product);
+        setIsPerecedero(product?.perecedero === 1);
+        setIsActive(product ? product.activo === 1 : true);
+        setSelectedCategoryId(product?.categoria_id || '');
+        setCosto(product?.precio_compra || 0);
+        setPrecioVenta(product?.precio_venta || 0);
+        setUnit(product?.unidad_medida || 'Unidad');
+        setAllowFraction(product?.permite_fraccion === 1);
+        setIsModalOpen(true);
+    };
+
+    // Lógica de Autocalculo
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const category = categories.find(c => c.id === parseInt(selectedCategoryId));
+        if (category && costo > 0) {
+            const margen = parseFloat(category.margen_utilidad);
+            const sugerido = costo * (1 + (margen / 100));
+            setPrecioVenta(Math.round(sugerido));
+        }
+    }, [selectedCategoryId, costo, categories, isModalOpen]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+
+        try {
+            const productData = {
+                nombre: data.nombre,
+                codigo_barras: data.codigo_barras,
+                descripcion: data.descripcion || '',
+                precio_compra: parseFloat(costo),
+                precio_venta: parseFloat(precioVenta),
+                stock: parseFloat(data.stock) || 0, // Stock puede ser decimal ahora
+                stock_minimo: 5,
+                categoria_id: parseInt(selectedCategoryId),
+                perecedero: isPerecedero ? 1 : 0,
+                fecha_fabricacion: isPerecedero ? data.fecha_fabricacion : null,
+                fecha_vencimiento: isPerecedero ? data.fecha_vencimiento : null,
+                activo: isActive ? 1 : 0,
+                unidad_medida: unit,
+                permite_fraccion: allowFraction ? 1 : 0,
+                venta_minima: parseFloat(data.venta_minima) || 1.000,
+                venta_maxima: parseFloat(data.venta_maxima) || 999.000
+            };
+
+            const headers = { 'x-user-role': 'superuser' };
+            if (currentProduct) {
+                await productService.update(currentProduct.id, productData, { headers });
+            } else {
+                await productService.create(productData, { headers });
+            }
+            setIsModalOpen(false);
+            fetchProducts();
+        } catch (error) {
+            console.error('Error saving product:', error);
+            alert(error.response?.data?.message || 'Error al guardar el producto');
+        }
+    };
+
+    const getExpirationStatus = (date) => {
+        if (!date) return null;
+        const now = new Date();
+        const exp = new Date(date);
+        const diff = (exp - now) / (1000 * 60 * 60 * 24);
+
+        if (diff < 0) return { label: 'Vencido', color: 'bg-red-100 text-red-800 border-red-200' };
+        if (diff <= 30) return { label: `Vence en ${Math.ceil(diff)} días`, color: 'bg-amber-100 text-amber-800 border-amber-200' };
+        return { label: 'Vigente', color: 'bg-blue-50 text-blue-700 border-blue-100' };
+    };
+
+    const filteredProducts = products.filter(p =>
+        (p.nombre?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (p.codigo_barras?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Inventario</h1>
+                    <p className="text-slate-500 mt-1">Gestiona tus productos, stock y precios.</p>
+                </div>
+                <Button onClick={() => handleOpenModal()} className="gap-2">
+                    <Plus size={18} />
+                    Nuevo Producto
+                </Button>
+            </div>
+
+            <Card>
+                <CardContent className="p-4">
+                    <div className="flex gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={18} />
+                            <Input
+                                placeholder="Buscar por nombre o código de barras..."
+                                className="pl-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Button variant="secondary" className="gap-2">
+                            <Filter size={18} />
+                            Filtros
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Producto</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU / Código</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">P. Venta</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">Cargando productos...</td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-red-500">{error}</td>
+                                </tr>
+                            ) : filteredProducts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-400">No se encontraron productos.</td>
+                                </tr>
+                            ) : (
+                                filteredProducts.map((product) => {
+                                    const expStatus = getExpirationStatus(product.fecha_vencimiento);
+                                    return (
+                                        <tr key={product.id} className={`hover:bg-slate-50 transition-colors group ${!product.activo ? 'opacity-50 grayscale' : ''}`}>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold shadow-sm ${product.perecedero ? 'bg-orange-50 text-orange-500' : 'bg-slate-100 text-slate-400'}`}>
+                                                        {product.nombre?.[0] || 'P'}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-slate-900 block">{product.nombre}</span>
+                                                        <span className="text-xs text-slate-400">{product.categoria_nombre || 'General'}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-500 font-mono italic">{product.codigo_barras}</td>
+                                            <td className="px-6 py-4 font-bold text-slate-900">${parseFloat(product.precio_venta).toLocaleString()}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`font-black ${product.stock <= 5 ? 'text-red-600' : 'text-slate-900'}`}>
+                                                        {product.stock} <span className="text-[10px] text-slate-400 font-normal">{product.unidad_medida === 'Unidad' ? 'ud.' : product.unidad_medida.toLowerCase()}</span>
+                                                    </span>
+                                                    {product.stock <= 5 && <AlertTriangle size={14} className="text-red-500 animate-pulse" />}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${product.activo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                                                        {product.activo ? (
+                                                            <><Eye size={10} className="mr-1" /> Activo</>
+                                                        ) : (
+                                                            <><EyeOff size={10} className="mr-1" /> Inactivo</>
+                                                        )}
+                                                    </span>
+                                                    {product.perecedero && (
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ${expStatus?.color}`}>
+                                                            {expStatus?.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenModal(product)}>
+                                                        <Edit2 size={14} className="text-slate-600" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600" onClick={() => {
+                                                        if (confirm('¿Seguro que deseas eliminar este producto permanentemente?'))
+                                                            productService.delete(product.id, { headers: { 'x-user-role': 'superuser' } }).then(fetchProducts)
+                                                    }}>
+                                                        <Trash2 size={14} />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                        <CardHeader className="border-b bg-slate-50/50 p-6">
+                            <CardTitle className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white">
+                                    {currentProduct ? <Edit2 size={18} /> : <Plus size={18} />}
+                                </div>
+                                {currentProduct ? 'Editar Producto' : 'Registrar Nuevo Producto'}
+                            </CardTitle>
+                        </CardHeader>
+                        <form onSubmit={handleSubmit}>
+                            <CardContent className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                {/* Estado y Categoría */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            {isActive ? <Eye className="text-emerald-500" size={20} /> : <EyeOff className="text-slate-400" size={20} />}
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-900">Estatus</p>
+                                                <p className="text-[10px] text-slate-500">{isActive ? 'Visible' : 'Oculto'}</p>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" className="sr-only peer" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                        </label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Categoría</label>
+                                        <select
+                                            value={selectedCategoryId}
+                                            onChange={(e) => setSelectedCategoryId(e.target.value)}
+                                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                            required
+                                        >
+                                            <option value="">Selecciona una categoría...</option>
+                                            {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.nombre} ({cat.margen_utilidad}%)</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Información General */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-sm font-bold text-slate-700">Nombre del Producto</label>
+                                        <Input name="nombre" defaultValue={currentProduct?.nombre} placeholder="Ej. Queso Campesino" required className="bg-slate-50 border-slate-200" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Código / Barcode</label>
+                                        <Input name="codigo_barras" defaultValue={currentProduct?.codigo_barras} placeholder="EAN13 o SKU" required className="bg-slate-50 border-slate-200" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Stock Actual</label>
+                                        <Input name="stock" type="number" step="0.001" defaultValue={currentProduct?.stock || 0} required className="bg-slate-50 border-slate-200 text-center font-bold" />
+                                    </div>
+                                </div>
+
+                                {/* Configuración de Venta */}
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Calculator size={14} /> Configuración de Venta
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-brand-50/30 rounded-3xl border border-brand-100/50">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                Unidad de Medida <Weight size={14} className="text-brand-500" />
+                                            </label>
+                                            <select
+                                                value={unit}
+                                                onChange={(e) => setUnit(e.target.value)}
+                                                className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                            >
+                                                <option value="Unidad">Unidad (ud.)</option>
+                                                <option value="Kg">Kilogramo (Kg)</option>
+                                                <option value="Gr">Gramo (gr)</option>
+                                                <option value="Lb">Libra (Lb)</option>
+                                                <option value="Litro">Litro (Lt)</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl">
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-900">Permitir Fracciones</p>
+                                                <p className="text-[10px] text-slate-400">Venta por decimales (ej. 0.5 kg)</p>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" checked={allowFraction} onChange={(e) => setAllowFraction(e.target.checked)} />
+                                                <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
+                                            </label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700">Venta Mínima</label>
+                                            <Input name="venta_minima" type="number" step="0.001" defaultValue={currentProduct?.venta_minima || 1.000} className="bg-white border-slate-200" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700">Venta Máxima (Límite)</label>
+                                            <Input name="venta_maxima" type="number" step="0.001" defaultValue={currentProduct?.venta_maxima || 999.000} className="bg-white border-slate-200" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Precios */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Costo de Compra</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                            <Input
+                                                value={costo}
+                                                onChange={(e) => setCosto(e.target.value)}
+                                                type="number"
+                                                step="0.01"
+                                                className="pl-7 bg-white border-slate-200"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                            Precio de Venta <Calculator size={14} className="text-emerald-500" />
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 font-bold">$</span>
+                                            <Input
+                                                value={precioVenta}
+                                                onChange={(e) => setPrecioVenta(e.target.value)}
+                                                type="number"
+                                                step="0.01"
+                                                className="pl-7 bg-emerald-50 border-emerald-100 text-emerald-700 font-black"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Perecederos */}
+                                <div className="p-4 rounded-2xl bg-orange-50/30 border border-orange-100 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="text-orange-500" size={20} />
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-900">Gestión de Perecederos</p>
+                                                <p className="text-[10px] text-slate-500">Activa si el producto tiene vencimiento</p>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" className="sr-only peer" checked={isPerecedero} onChange={(e) => setIsPerecedero(e.target.checked)} />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+
+                                    {isPerecedero && (
+                                        <div className="grid grid-cols-2 gap-4 pt-2 animate-in slide-in-from-top-2 duration-300">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Fabricación</label>
+                                                <Input name="fecha_fabricacion" type="date" defaultValue={currentProduct?.fecha_fabricacion?.split('T')[0]} className="text-xs h-9 bg-white" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Vencimiento</label>
+                                                <Input name="fecha_vencimiento" type="date" defaultValue={currentProduct?.fecha_vencimiento?.split('T')[0]} className="text-xs h-9 bg-white border-orange-200 focus:border-orange-500" required={isPerecedero} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                            <div className="bg-slate-50 p-6 flex justify-end gap-3 border-t">
+                                <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                                <Button type="submit" className="px-8 shadow-lg shadow-brand-500/20 font-bold">{currentProduct ? 'Actualizar Cambios' : 'Confirmar Registro'}</Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

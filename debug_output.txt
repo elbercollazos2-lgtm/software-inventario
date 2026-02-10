@@ -1,0 +1,50 @@
+--- Página 1 ---
+HYN DISTRIBUIDORA SAS FACTURA ELECTRÓNICA DE VENTA
+Nit: 901411763-3
+Matricula Mercantil: 202668 No. PREV45324
+Dirección: cra 1 a calle 7a - 306 | Cdad: Pasto
+Teléfono: 3105797397
+Señores: HALDRY ROBERT VELASQUEZ CONDO NIT: 18188799
+COPIANDINA C A Código: 1004064
+Dirección: CR 29 10 Teléfono: 4228051
+Barrio: PARQUE CENTRAL Cdad. Puerto Asís Correo: blackll@hotmail.es
+Zona Pedido Asesor Comercial Condición de Pago Fecha de Expedición Fecha de Vencimiento
+111 23 JOSE LUIS MADRONERO Contado 28/01/2026 28/01/2026
+Medio de Pago: Efectivo Plazo en días: 0
+Nro. Item Descripción U/M Cant. Precio U. %Dto $Dto IVA Subtotal Total + IVA
+c.livoma.www
+|
+MALEF
+|
+7-969464009
+:TIN
+|
+.S.A.S
+livóM
+aicnetsisA
+rop
+odareneG
+Pedido - SECO
+1,00 P204 AREQUIPE VASO DISPL 6X50 PROLECHE GRM 4.00 $8.571,00 0% 0 19% $34.284,00 $40.798,00
+2,00 60263 TORTA VAINILLA 900G RAMO GRM 3.00 $18.740,00 0% 0 19% $56.220,00 $66.902,00
+3,00 59446 PONQUE TRADICIONAL 230G RAMO GRM 10.00 $4.706,00 0% 0 19% $47.060,00 $56.001,00
+4,00 59679 CHOCOR TJD 65G (PAQ*5) GRM 12.00 $9.664,00 0% 0 19% $115.968,00 $138.002,00
+5,00 59884 RAMITO PNQ INDV (2UNDX25G) GRM 10.00 $1.529,00 0% 0 19% $15.290,00 $18.195,00
+6,00 59541 CHOCOR TJD MITI 40G GRM 35.00 $1.429,00 0% 0 19% $50.015,00 $59.518,00
+Total Item
+6
+Observaciones: Valor bruto $318.837
+Descuento $0
+Información de Aceptación Iva 19% $60.579
+VALOR NETO $379.416
+Nombre Identificación Fecha Firma y Sello
+Valor en letras: trescientos setenta y nueve mil cuatrocientos dieciséis Pesos MCTE Retención Cliente (-) $0,00
+Cambios (-) $0,00
+VALOR A PAGAR $379.416,00
+FACTURACION ELECTRONICA N° 18764093735106 AUTORIZA DESDE PREV 1 HASTA PREV 500000 | 29/05/2025 HASTA
+29/05/2027
+Se entenderá como aceptación total de la factura si dentro de los tres (3) días hábiles siguientes a su recepción, no existe algún tipo
+de rechazo o novedad sobre el contenido de la misma. Ley 1231 de 2008, modificado por el Art. 86, Ley 1676 de 2013.
+CUFE: 1c529ad3b9c73057990422c913a510d6afad87ed404cd6235d982d441dd677b4b5ba461ae73afa677407fb8b886480c0
+*PREV45324* Fecha de generación: 28/01/2026 09:49:43 Página 1 de 1
+
